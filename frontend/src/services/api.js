@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { auth } from "./firebase.js";
-import 'dotenv/config';
 
 const api = axios.create({
   baseURL: process.env.BASE_URL,
