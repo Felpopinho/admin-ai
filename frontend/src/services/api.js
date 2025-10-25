@@ -1,8 +1,9 @@
 import axios from 'axios';
 import { auth } from "./firebase.js";
+import 'dotenv/config';
 
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api', // Adjust the base URL as needed
+  baseURL: process.env.BASE_URL,
 });
 
 // Middleware para incluir token automaticamente
