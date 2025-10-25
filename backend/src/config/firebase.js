@@ -15,7 +15,7 @@ const serviceAccount = {
 }
 
 const firebaseApp = admin.initializeApp({
-  credential: admin.credential.cert(JSON.parse(serviceAccount)),
+  credential: admin.credential.cert(serviceAccount),
 });
 
 const db = admin.firestore();
