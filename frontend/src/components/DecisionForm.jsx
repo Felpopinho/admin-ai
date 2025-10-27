@@ -18,7 +18,7 @@ export default function DecisionForm({ onCreated }) {
         custos: "",
         lucro_estimado: "",
         prazos: "",
-        produtividade: 1
+        produtividade: ""
     });
 
     const handleChange = e => {
@@ -54,7 +54,7 @@ export default function DecisionForm({ onCreated }) {
                 custos: "",
                 lucro_estimado: "",
                 prazos: "",
-                produtividade: 1
+                produtividade: ""
             });
             showSnackbar("Decisão criada com sucesso!", "success");
         } catch (error) {
@@ -97,16 +97,29 @@ export default function DecisionForm({ onCreated }) {
 
           {/* Área e Tipo */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <TextField
-              name="area"
-              label="Área"
-              placeholder="Ex: Financeiro, RH"
-              onChange={handleChange}
-              value={form.area}
-              required
-              fullWidth
-              variant="outlined"
-            />
+            <FormControl fullWidth margin="normal">
+              <InputLabel>Área</InputLabel>
+              <Select
+                name="area"
+                value={form.area}
+                onChange={handleChange}
+                required
+              >
+                <MenuItem value="financeiro">Financeiro</MenuItem>
+                <MenuItem value="operacoes">Operações / Produção</MenuItem>
+                <MenuItem value="rh">Recursos Humanos</MenuItem>
+                <MenuItem value="marketing">Marketing e Vendas</MenuItem>
+                <MenuItem value="ti">Tecnologia da Informação (TI)</MenuItem>
+                <MenuItem value="juridico">Jurídico / Compliance</MenuItem>
+                <MenuItem value="p&d">Pesquisa e Desenvolvimento (P&D)</MenuItem>
+                <MenuItem value="sustentabilidade">Sustentabilidade / ESG</MenuItem>
+                <MenuItem value="compras">Compras / Suprimentos</MenuItem>
+                <MenuItem value="atendimento">Atendimento ao Cliente / Suporte</MenuItem>
+                <MenuItem value="qualidade">Qualidade</MenuItem>
+                <MenuItem value="riscos">Riscos / Segurança</MenuItem>
+                <MenuItem value="parcerias">Parcerias / Negócios</MenuItem>
+              </Select>
+            </FormControl>
             <FormControl fullWidth>
                 <InputLabel id="tipo-label">Tipo de decisão</InputLabel>
                 <Select
@@ -170,7 +183,7 @@ export default function DecisionForm({ onCreated }) {
               step="0.1"
               name="produtividade"
               label="Produtividade"
-              placeholder="Ex: 1.2"
+              placeholder="Número onde 1.0 é igual à produtividade atual. Ex: 1.2 = 20% mais produtivo"
               onChange={handleChange}
               value={form.produtividade}
               fullWidth

@@ -2,7 +2,7 @@ import axios from 'axios';
 import { auth } from "./firebase.js";
 
 const api = axios.create({
-  baseURL: process.env.BASE_URL,
+  baseURL: process.env.REACT_APP_BASE_URL,
 });
 
 // Middleware para incluir token automaticamente

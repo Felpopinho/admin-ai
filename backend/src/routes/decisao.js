@@ -2,6 +2,7 @@ import express from "express";
 import { db } from "../config/firebase.js";
 import { verificarToken } from "../middleware/auth.js";
 import { runDecisionAnalysis } from "../services/analiseAI.js";
+import { treinarModelo, preverPontuacao } from '../ml/modelo.cjs';
 
 const router = express.Router();
 
@@ -31,6 +32,7 @@ router.post("/", verificarToken, async (req, res) => {
 
 // Analisar decisão
 router.post("/:id/analisar", verificarToken, async (req, res) => {
+
   try {
     const { id } = req.params;
     const uid = req.uid;
@@ -52,6 +54,13 @@ router.post("/:id/analisar", verificarToken, async (req, res) => {
       if (!resultado || !resultado.recomendacao || !resultado.pontuacao || !resultado.riscos || !resultado.justificativa) {
         throw new Error("Resultado da IA inválido");
       }
+      try {
+        const pontuacaoPrevista = await preverPontuacao(decisao); // usa ML.js
+        resultado.pontuacaoPrevista = pontuacaoPrevista;
+      } catch (mlErr) {
+        console.error("Erro ao gerar pontuação ML:", mlErr.message);
+        resultado.pontuacaoPrevista = null;
+      }
     } catch (e) {
       console.error("Erro ao gerar análise da IA:", e);
       return res.status(500).json({ erro: "Falha ao executar análise da IA" });
@@ -63,6 +72,19 @@ router.post("/:id/analisar", verificarToken, async (req, res) => {
       analisado_por: uid,
       analisado_em: new Date().toISOString(),
       atualizado_em: new Date()
+    });
+
+    await db.collection('historico_analises').add({
+      area: decisao.area,
+      tipo: decisao.tipo,
+      custos: decisao.impacto_previsto.custos,
+      lucro_estimado: decisao.impacto_previsto.lucro_estimado,
+      prazos: decisao.impacto_previsto.prazos,
+      produtividade: decisao.impacto_previsto.produtividade,
+      pontuacao: resultado.pontuacao,
+      recomendacao: resultado.recomendacao,
+      justificativa: resultado.justificativa,
+      criado_em: new Date().toISOString()
     });
 
     return res.json({ sucesso: true, resultado });
