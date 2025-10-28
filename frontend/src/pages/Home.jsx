@@ -83,7 +83,7 @@ export default function Home() {
     <div className="flex flex-col gap-4">
 
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center p-4 gap-2 bg-gray-50 rounded shadow-sm">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center p-4 gap-2 bg-gray-50 rounded shadow-sm relative">
         <h1 className="font-bold text-3xl text-blue-600">ADMIN.AI</h1>
 
         <div className="flex flex-col text-2xl md:flex-row md:items-center gap-2">
@@ -97,11 +97,13 @@ export default function Home() {
               Dashboard
             </Button>
           )}
-
+        </div>
           {/* Avatar que abre dialog */}
-              <Avatar onClick={handleMenuOpen} onClose={handleMenuClose}>
-                {usuario?.displayName ? usuario.displayName[0].toUpperCase() : usuario?.email?.[0].toUpperCase()}
-              </Avatar>
+              <div className="max-[600px]:absolute r-0 t-5">
+                <Avatar onClick={handleMenuOpen} onClose={handleMenuClose}>
+                  {usuario?.displayName ? usuario.displayName[0].toUpperCase() : usuario?.email?.[0].toUpperCase()}
+                </Avatar>
+              </div>
               <Menu
                 anchorEl={anchorEl}
                 open={Boolean(anchorEl)}
@@ -119,7 +121,6 @@ export default function Home() {
                 </MenuItem>
                 <Button fullWidth color="error" onClick={handleLogout}>Sair</Button>
               </Menu>
-        </div>
       </div>
 
       <Divider />
