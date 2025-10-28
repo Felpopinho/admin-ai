@@ -99,7 +99,7 @@ export default function Home() {
           )}
         </div>
           {/* Avatar que abre dialog */}
-              <div className="max-[600px]:absolute r-0 t-5">
+              <div className="max-[600px]:absolute right-5 top-5">
                 <Avatar onClick={handleMenuOpen} onClose={handleMenuClose}>
                   {usuario?.displayName ? usuario.displayName[0].toUpperCase() : usuario?.email?.[0].toUpperCase()}
                 </Avatar>
