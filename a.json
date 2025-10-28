@@ -1,0 +1,132 @@
+[
+  {
+    "titulo": "Investimento em Marketing Digital",
+    "descricao": "Aumentar o orçamento de anúncios online para 3 meses.",
+    "area": "marketing",
+    "tipo": "marketing",
+    "impacto_previsto": {
+      "custos": 50000,
+      "lucro_estimado": 150000,
+      "prazos": 90,
+      "produtividade": 0
+    },
+    "status": "em análise"
+  },
+  {
+    "titulo": "Contratação de Analista Financeiro",
+    "descricao": "Adicionar um novo membro na equipe financeira.",
+    "area": "financeiro",
+    "tipo": "financeira",
+    "impacto_previsto": {
+      "custos": 12000,
+      "lucro_estimado": 0,
+      "prazos": 30,
+      "produtividade": 20
+    },
+    "status": "em análise"
+  },
+  {
+    "titulo": "Atualização do ERP",
+    "descricao": "Implementar nova versão do sistema ERP da empresa.",
+    "area": "ti",
+    "tipo": "tecnologia",
+    "impacto_previsto": {
+      "custos": 80000,
+      "lucro_estimado": 100000,
+      "prazos": 60,
+      "produtividade": 30
+    },
+    "status": "em análise"
+  },
+  {
+    "titulo": "Programa de Treinamento RH",
+    "descricao": "Treinamento para liderança e gestão de equipes.",
+    "area": "rh",
+    "tipo": "pessoal",
+    "impacto_previsto": {
+      "custos": 10000,
+      "lucro_estimado": 0,
+      "prazos": 15,
+      "produtividade": 25
+    },
+    "status": "em análise"
+  },
+  {
+    "titulo": "Redução de Custos Operacionais",
+    "descricao": "Automatizar parte do processo de produção.",
+    "area": "operacoes",
+    "tipo": "operacional",
+    "impacto_previsto": {
+      "custos": 30000,
+      "lucro_estimado": 50000,
+      "prazos": 45,
+      "produtividade": 40
+    },
+    "status": "em análise"
+  },
+  {
+    "titulo": "Parceria com Fornecedor Local",
+    "descricao": "Estabelecer contrato com fornecedor de matéria-prima.",
+    "area": "parcerias",
+    "tipo": "parcerias",
+    "impacto_previsto": {
+      "custos": 20000,
+      "lucro_estimado": 30000,
+      "prazos": 30,
+      "produtividade": 10
+    },
+    "status": "em análise"
+  },
+  {
+    "titulo": "Projeto de Sustentabilidade",
+    "descricao": "Reduzir emissão de CO2 nas fábricas.",
+    "area": "sustentabilidade",
+    "tipo": "sustentabilidade",
+    "impacto_previsto": {
+      "custos": 15000,
+      "lucro_estimado": 0,
+      "prazos": 60,
+      "produtividade": 0
+    },
+    "status": "em análise"
+  },
+  {
+    "titulo": "Expansão de Loja Física",
+    "descricao": "Abrir uma nova unidade em outra cidade.",
+    "area": "operacoes",
+    "tipo": "estrategica",
+    "impacto_previsto": {
+      "custos": 100000,
+      "lucro_estimado": 200000,
+      "prazos": 120,
+      "produtividade": 15
+    },
+    "status": "em análise"
+  },
+  {
+    "titulo": "Compra de Equipamentos de TI",
+    "descricao": "Atualizar computadores e servidores da empresa.",
+    "area": "ti",
+    "tipo": "tecnologia",
+    "impacto_previsto": {
+      "custos": 40000,
+      "lucro_estimado": 0,
+      "prazos": 30,
+      "produtividade": 35
+    },
+    "status": "em análise"
+  },
+  {
+    "titulo": "Auditoria Jurídica Interna",
+    "descricao": "Revisar contratos e processos legais da empresa.",
+    "area": "juridico",
+    "tipo": "juridica",
+    "impacto_previsto": {
+      "custos": 5000,
+      "lucro_estimado": 0,
+      "prazos": 20,
+      "produtividade": 0
+    },
+    "status": "em análise"
+  }
+]

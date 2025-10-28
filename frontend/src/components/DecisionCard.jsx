@@ -6,7 +6,7 @@ import { AuthContext } from "../contexts/AuthContext";
 import { useSnackbar } from "../contexts/SnackbarContext";
 
 export default function DecisionCard({ data, onAtualizar }) {
-  const { perfil } = useContext(AuthContext);
+  const { usuario, perfil } = useContext(AuthContext);
   
   const { showSnackbar } = useSnackbar();
   
@@ -75,27 +75,60 @@ export default function DecisionCard({ data, onAtualizar }) {
       setLoading(false);
     }
   };
+  
+  const [openAprovacao, setOpenAprovacao] = useState(false);
+  const [acaoAprovacao, setAcaoAprovacao] = useState("");
+  const [justificativa, setJustificativa] = useState("");
 
+  const handleAprovacao = (acao) => {
+    setAcaoAprovacao(acao);
+    setOpenAprovacao(true);
+  }
+  
   const handleAprovar = async () => {
     try {
       const token = await auth.currentUser.getIdToken();
-      await api.patch(`/decisoes/${data.id}/aprovar`, {}, {
+      await api.patch(`/decisoes/${data.id}/aprovar`,  {
+        userNivel: perfil.nivel,
+        usuarioId: usuario.uid,
+        usuarioNome: usuario.displayName || perfil.email,
+        justificativa,
+      }, {
         headers: { Authorization: `Bearer ${token}` },
       });
       await onAtualizar();
       showSnackbar("Decisão aprovada com sucesso!", "success");
+      setOpenAprovacao(false);
     } catch (err) {
       console.error("Erro ao aprovar:", err);
       showSnackbar("Erro ao aprovar decisão.", "error");
     }
   };
 
+  const handleReprovar = async () => {
+    try {
+      const token = await usuario.getIdToken();
+      await api.patch(`/decisoes/${data.id}/reprovar`, {
+        userNivel: perfil.nivel,
+        usuarioId: usuario.uid,
+        usuarioNome: usuario.displayName || usuario.email,
+        justificativa,
+      }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      await onAtualizar();
+      showSnackbar("Decisão reprovada com sucesso!", "success");
+      setOpenAprovacao(false);
+    } catch (error) {
+      showSnackbar("Erro ao reprovar decisão.", "error");
+      console.error("Erro ao reprovar decisão:", error);
+    }
+  };
+
+
   return (<>
       {/* CARD SIMPLES */}
-      <Card
-        className="mb-4 cursor-pointer hover:shadow-md transition"
-        onClick={handleOpen}
-      >
+      <Card className="mb-4 cursor-pointer hover:shadow-md transition">
         <CardContent>
           <Box display="flex" justifyContent="space-between" alignItems="flex-start">
             <div>
@@ -110,17 +143,10 @@ export default function DecisionCard({ data, onAtualizar }) {
 
             <Box>
               <Tooltip title="Ver / Editar">
-                <IconButton color="primary" onClick={handleOpen}>
+                <IconButton size="large" color="primary" onClick={handleOpen}>
                   <Icon>visibility</Icon>
                 </IconButton>
               </Tooltip>
-              {["gestor", "admin"].includes(perfil?.nivel) && (
-                <Tooltip title="Excluir">
-                  <IconButton color="error" onClick={handleExcluir}>
-                    <Icon>delete</Icon>
-                  </IconButton>
-                </Tooltip>
-              )}
             </Box>
           </Box>
         </CardContent>
@@ -253,9 +279,23 @@ export default function DecisionCard({ data, onAtualizar }) {
           )}
         </DialogContent>
 
-        <DialogActions>
+        <DialogActions sx={{justifyContent: "space-between"}}>
           {!editando ? (
             <>
+                <div className="flex gap-2">
+                  <Tooltip title="Editar">
+                    <IconButton onClick={() => setEditando(true)} color="primary">
+                      <Icon>edit</Icon>
+                    </IconButton>
+                  </Tooltip>
+                  {["gestor", "admin"].includes(perfil?.nivel) && (
+                    <Tooltip title="Excluir">
+                      <IconButton color="error" onClick={handleExcluir}>
+                        <Icon>delete</Icon>
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                </div>
               {data.status === "em análise" && (
                 <Button
                   onClick={handleAnalisar}
@@ -273,22 +313,22 @@ export default function DecisionCard({ data, onAtualizar }) {
               )}
 
               {["gestor", "admin"].includes(perfil?.nivel) &&
-                data.status === "aguardando aprovação" && (
+                data.status === "aguardando aprovação" && (<div className="flex gap-2">
                   <Button
-                    onClick={handleAprovar}
+                    onClick={() => handleAprovacao("Reprovar")}
+                    color="error"
+                    variant="contained"
+                  >
+                    Reprovar
+                  </Button>
+                  <Button
+                    onClick={() => handleAprovacao("Aprovar")}
                     color="success"
                     variant="contained"
                   >
                     Aprovar
                   </Button>
-                )}
-
-              <IconButton onClick={() => setEditando(true)} color="primary">
-                <Icon>edit</Icon>
-              </IconButton>
-              <Button onClick={handleExcluir} color="error">
-                <Icon>delete</Icon>
-              </Button>
+                </div>)}
               <Button onClick={handleClose}>Fechar</Button>
             </>
           ) : (
@@ -300,6 +340,23 @@ export default function DecisionCard({ data, onAtualizar }) {
             </>
           )}
         </DialogActions>
+      </Dialog>
+
+      <Dialog open={openAprovacao} onClose={() => setOpenAprovacao(false)}>
+        <div className="flex flex-col gap-2 p-4">
+          <DialogTitle>{acaoAprovacao} Decisão</DialogTitle>
+          <TextField fullWidth multiline rows={3} label="Justificativa (opcional)" value={justificativa} onChange={(e) => setJustificativa(e.target.value)}/>
+          <DialogActions>
+            <Button onClick={() => setOpenAprovacao(false)}>Cancelar</Button>
+            <Button
+              variant="contained"
+              color={acaoAprovacao === "Aprovar" ? "success" : "error"}
+              onClick={acaoAprovacao === "Aprovar" ? handleAprovar : handleReprovar}
+            >
+              Confirmar {acaoAprovacao}
+            </Button>
+          </DialogActions>
+        </div>
       </Dialog>
     </>
   );

@@ -1,7 +1,7 @@
+import { spawn } from "child_process";
+import { db } from "../config/firebase.js";
 import { getAI, getGenerativeModel, GoogleAIBackend } from "firebase/ai";
 import { initializeApp } from "firebase/app";
-import { db } from "../config/firebase.js";
-import { areas, tipos, treinarModelo, preverPontuacao } from "../ml/modelo.cjs";
 
 const firebaseConfig = {
   apiKey: process.env.API_KEY,
@@ -17,96 +17,129 @@ const firebaseApp = initializeApp(firebaseConfig);
 const ai = getAI(firebaseApp, { backend: new GoogleAIBackend() });
 const model = getGenerativeModel(ai, { model: "gemini-2.5-flash" });
 
-// Função principal de análise com aprendizado contínuo
-export async function runDecisionAnalysis(decisao) {
+export async function runDecisionAnalysis(decisao, id) {
+  let resultadoML;
 
-  // 2️⃣ Obtém pontuação prevista pelo ML
-  let resultadoML = { pontuacao: null, recomendacao: null, justificativa: null };
+  const snapshot = await db.collection('historico_analises').get();
+  const historico = [];
+  snapshot.forEach(doc => historico.push(doc.data()));
+
   try {
-    // 1️⃣ Atualiza o modelo ML com o histórico mais recente
-    const modelo = await treinarModelo();
-    if (!modelo || !modelo.predict) throw new Error('Modelo ML inválido');
-    const pontuacaoPrevista = await preverPontuacao(decisao, modelo);
-    resultadoML.pontuacao = Math.round(pontuacaoPrevista);
-    resultadoML.recomendacao = pontuacaoPrevista >= 70 ? "Aprovar" : pontuacaoPrevista >= 40 ? "Revisar" : "Rejeitar";
-    resultadoML.justificativa = `Pontuação prevista pelo modelo ML: ${resultadoML.pontuacao}`;
-  } catch (mlErr) {
-    console.error("Erro ao gerar pontuação ML:", mlErr.message);
+    resultadoML = await new Promise((resolve, reject) => {
+      const python = spawn("python", ["./ml/modelo.py"]);
+
+      const input = JSON.stringify({ decisao, historico });
+      python.stdin.write(input);
+      python.stdin.end();
+      let data = "";
+      
+      python.stdout.on("data", chunk => {
+        data += chunk.toString();
+      });
+
+      python.stderr.on("data", err => {
+        console.error("Erro Python:", err.toString());
+      });
+
+      python.on("close", () => {
+        if (!data) return reject("Python não retornou dados");
+        try {
+          const resultado = JSON.parse(data);
+          resolve(resultado);
+        } catch (e) {
+          reject("Erro ao processar saída do Python: " + e.message);
+        }
+      });
+    });
+  } catch (e) {
+    console.error("Erro ao gerar pontuação ML:", e);
     resultadoML = {
       pontuacao: 50,
       recomendacao: "Revisar",
-      justificativa: "Erro no cálculo da ML"
+      justificativa: "Erro ao calcular ML"
     };
   }
 
-  const areaIndex = areas[decisao.area] ?? -1;
-  const tipoIndex = tipos[decisao.tipo] ?? -1;
+  // 2️⃣ Gera análise da IA baseada no prompt + sugestão do ML
+  const areaIndex = decisao.area; // opcional: mapear índice se quiser
+  const tipoIndex = decisao.tipo;
 
-  // 3️⃣ Gera análise da IA baseada no prompt + sugestão do ML
-  const prompt = `Analise a decisão abaixo e retorne um JSON com os seguintes campos:
+  const prompt = `Você é um assistente inteligente, especializado em analisar decisões empresariais. Avalie a decisão abaixo considerando:
+
+- Área e tipo da decisão
+- Custos, lucro estimado, prazos e produtividade
+- Histórico de decisões anteriores (se houver)
+- Sugestão do modelo de Machine Learning fornecida
+
+Sua análise deve gerar um **JSON estruturado** com os seguintes campos:
+
 {
   "pontuacao": número de 0 a 100 representando a eficiência da decisão,
-  "riscos": lista de riscos principais,
+  "riscos": lista de riscos principais e alertas sobre possíveis problemas,
   "recomendacao": "Aprovar", "Revisar" ou "Rejeitar",
-  "justificativa": texto curto explicando o motivo da recomendação
+  "pontuacaoPrevistaML": número fornecido pelo ML,
+  "justificativa": texto explicando de forma clara o motivo da recomendação
 }
-Informações estruturadas:
-- Área (índice): ${areaIndex} (${decisao.area})
-- Tipo (índice): ${tipoIndex} (${decisao.tipo})
+
+### INFORMAÇÕES DA DECISÃO
+- Área: ${decisao.area}
+- Tipo: ${decisao.tipo}
 - Custos previstos: ${decisao.impacto_previsto?.custos || "não informado"}
 - Lucro estimado: ${decisao.impacto_previsto?.lucro_estimado || "não informado"}
 - Prazos: ${decisao.impacto_previsto?.prazos || "não informado"}
-- Produtividade: ${decisao.impacto_previsto?.produtividade || "não informado"}
+- Produtividade: ${decisao.impacto_previsto?.produtividade || "não informado"} (Numero decimal onde 1 é a produtividade atual, logo 1.2 seria equivalente a 20% de aumento)
 - Título: ${decisao.titulo}
 - Descrição: ${decisao.descricao || "Sem descrição"}
 
-Sugestão do modelo Machine Learning:
+### HISTÓRICO (analise o histórico das decisões para futuras ocorrências)
+${historico.length > 0 ? JSON.stringify(historico) : "Sem histórico disponível"}
+
+### SUGESTÃO DO MODELO ML (Não cite que esses dados são de ML, apenas use na análise)
 - Recomendação: ${resultadoML.recomendacao}
 - Pontuação: ${resultadoML.pontuacao}
 - Justificativa: ${resultadoML.justificativa}
-`;
 
-  const result = await model.generateContent(prompt);
-  const resposta = result.response;
-  const text = resposta.text();
-  console.log(text);
+### REGRAS
+1. Transforme valores textuais em números sempre que possível (ex: "30 dias" → 30). (Mas não use apenas o numero nos textos mostrados ao usuário)
+2. Baseie a análise no histórico para alertar sobre padrões que deram errado antes.
+3. Avalie múltiplos critérios: financeiro, risco, produtividade, impacto estratégico.
+4. Gere alertas detalhados sobre inconsistências, riscos e possíveis falhas.
+5. Forneça justificativa completa e clara.
+6. Saída **somente em JSON**, sem textos extras ou explicações fora do JSON.
+`;
 
   let parsed;
   try {
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
   } catch (e) {
     console.error("Erro ao interpretar resposta da IA:", e);
   }
 
-  // 4️⃣ Cria objeto final combinando IA + ML
+  // 3️⃣ Combina IA + ML
   const resultadoFinal = parsed
     ? { ...parsed, pontuacaoPrevistaML: resultadoML.pontuacao }
     : {
-        pontuacao: 50,
+        pontuacao: resultadoML.pontuacao,
         riscos: ["Não identificado"],
-        recomendacao: "Revisar",
-        justificativa: resposta,
-        pontuacaoPrevistaML: resultadoML.pontuacao,
+        recomendacao: resultadoML.recomendacao,
+        justificativa: resultadoML.justificativa,
+        pontuacaoPrevistaML: resultadoML.pontuacao
       };
 
-  // 5️⃣ Atualiza histórico de análises para aprendizado contínuo
+  // 4️⃣ Salva histórico completo
   try {
-    await db.collection('historico_analises').add({
-      area: decisao.area,
-      tipo: decisao.tipo,
-      custos: decisao.impacto_previsto?.custos || null,
-      lucro_estimado: decisao.impacto_previsto?.lucro_estimado || null,
-      prazos: decisao.impacto_previsto?.prazos || null,
-      produtividade: decisao.impacto_previsto?.produtividade || null,
-      pontuacao: resultadoFinal.pontuacao,
-      recomendacao: resultadoFinal.recomendacao,
-      justificativa: resultadoFinal.justificativa,
+    await db.collection("historico_analises").add({
+      id_decisao: id,
+      ...decisao,
+      resultado_analise: resultadoFinal,
       criado_em: new Date().toISOString()
     });
   } catch (e) {
     console.error("Erro ao salvar histórico ML:", e);
   }
-
+  console.log(resultadoFinal)
   return resultadoFinal;
 }

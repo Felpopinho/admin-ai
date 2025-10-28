@@ -2,7 +2,6 @@ import express from "express";
 import { db } from "../config/firebase.js";
 import { verificarToken } from "../middleware/auth.js";
 import { runDecisionAnalysis } from "../services/analiseAI.js";
-import { treinarModelo, preverPontuacao } from '../ml/modelo.cjs';
 
 const router = express.Router();
 
@@ -30,6 +29,54 @@ router.post("/", verificarToken, async (req, res) => {
   }
 });
 
+router.delete("/:id", async (req, res) => {
+  const { id } = req.params;
+
+  if (!id) {
+    return res.status(400).json({ error: "ID da decisão não informado" });
+  }
+
+  try {
+    const decisaoRef = db.collection("decisoes").doc(id);
+    const doc = await decisaoRef.get();
+
+    if (!doc.exists) {
+      return res.status(404).json({ error: "Decisão não encontrada" });
+    }
+
+    const decisaoData = doc.data();
+
+    // Busca histórico associado
+    const historicoSnap = await db
+      .collection("historico")
+      .where("id_decisao", "==", id)
+      .get();
+
+    const historicoData = [];
+    const batch = db.batch();
+
+    historicoSnap.forEach((hDoc) => {
+      historicoData.push({ id: hDoc.id, ...hDoc.data() });
+      batch.delete(hDoc.ref);
+    });
+
+    // Deleta todos os históricos no batch
+    await batch.commit();
+
+    // Deleta a decisão
+    await decisaoRef.delete();
+
+    return res.status(200).json({
+      message: "Decisão e histórico excluídos com sucesso",
+      decisao: { id, ...decisaoData },
+      historico: historicoData,
+    });
+  } catch (error) {
+    console.error("Erro ao excluir decisão:", error);
+    return res.status(500).json({ error: "Erro interno ao excluir decisão" });
+  }
+});
+
 // Analisar decisão
 router.post("/:id/analisar", verificarToken, async (req, res) => {
 
@@ -50,16 +97,9 @@ router.post("/:id/analisar", verificarToken, async (req, res) => {
     let resultado;
 
     try {
-      resultado = await runDecisionAnalysis(decisao);
+      resultado = await runDecisionAnalysis(decisao, id);
       if (!resultado || !resultado.recomendacao || !resultado.pontuacao || !resultado.riscos || !resultado.justificativa) {
         throw new Error("Resultado da IA inválido");
-      }
-      try {
-        const pontuacaoPrevista = await preverPontuacao(decisao); // usa ML.js
-        resultado.pontuacaoPrevista = pontuacaoPrevista;
-      } catch (mlErr) {
-        console.error("Erro ao gerar pontuação ML:", mlErr.message);
-        resultado.pontuacaoPrevista = null;
       }
     } catch (e) {
       console.error("Erro ao gerar análise da IA:", e);
@@ -102,7 +142,7 @@ router.post("/:id/analisar", verificarToken, async (req, res) => {
 router.patch("/:id/aprovar", verificarToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const { userNivel, uid } = req;
+    const { userNivel, usuarioId, usuarioNome, justificativa } = req.body;
 
     // 🔒 Permissão: apenas gestor ou admin
     if (!["gestor", "admin"].includes(userNivel)) {
@@ -119,7 +159,9 @@ router.patch("/:id/aprovar", verificarToken, async (req, res) => {
     // Atualiza os campos de aprovação
     await decisaoRef.update({
       status: "aprovada",
-      aprovada_por: uid,
+      aprovada_por_nome: usuarioNome,
+      aprovada_por_id: usuarioId,
+      justificativa_aprovacao: justificativa || null,
       aprovada_em: new Date().toISOString(),
     });
 
@@ -127,6 +169,35 @@ router.patch("/:id/aprovar", verificarToken, async (req, res) => {
   } catch (error) {
     console.error("Erro ao aprovar decisão:", error);
     res.status(500).send({ erro: error.message });
+  }
+});
+
+router.patch("/:id/reprovar", verificarToken, async (req, res) => {
+  const { id } = req.params;
+  const { userNivel, usuarioId, usuarioNome, justificativa } = req.body;
+
+  if (!["gestor", "admin"].includes(userNivel)) {
+    return res.status(403).send({ erro: "Acesso negado." });
+  }
+
+  try {
+    const docRef = db.collection("decisoes").doc(id);
+    const doc = await docRef.get();
+    if (!doc.exists) {
+      return res.status(404).send({ erro: "Decisão não encontrada." });
+    }
+
+    await docRef.update({
+      status: "reprovada",
+      reprovada_por_id: usuarioId,
+      reprovada_por_nome: usuarioNome,
+      justificativa_reprovacao: justificativa || null,
+      reprovada_em: new Date().toISOString(),
+    });
+    res.status(200).send({ mensagem: "Decisão reprovada com sucesso." });
+  } catch (erro) {
+    console.error(erro);
+    res.status(500).send({ erro: "Erro ao reprovar decisão." });
   }
 });
 

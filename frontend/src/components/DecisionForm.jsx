@@ -40,7 +40,8 @@ export default function DecisionForm({ onCreated }) {
               prazos: form.prazos,
               produtividade: Number(form.produtividade)
             },
-            criado_por_nome: usuario?.displayName || usuario?.email
+            criado_por_nome: usuario?.displayName || usuario?.email,
+            criado_por_id: usuario?.uid
         };
 
         try {
