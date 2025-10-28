@@ -62,7 +62,9 @@ export default function DecisionCard({ data, onAtualizar }) {
     try {
       setLoading(true);
       const token = await auth.currentUser.getIdToken();
-      const res = await api.post(`/decisoes/${data.id}/analisar`, {}, {
+      const res = await api.post(`/decisoes/${data.id}/analisar`, {
+        username: usuario.displayName || usuario.email,
+      }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       console.log("Resultado análise:", res.data.resultado);
@@ -296,7 +298,7 @@ export default function DecisionCard({ data, onAtualizar }) {
                     </Tooltip>
                   )}
                 </div>
-              {data.status === "em análise" && (
+              {data.status === "aguardando análise" && (
                 <Button
                   onClick={handleAnalisar}
                   disabled={loading}

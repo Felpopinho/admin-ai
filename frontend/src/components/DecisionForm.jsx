@@ -98,39 +98,22 @@ export default function DecisionForm({ onCreated }) {
 
           {/* Área e Tipo */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormControl fullWidth margin="normal">
-              <InputLabel>Área</InputLabel>
-              <Select
-                name="area"
-                value={form.area}
-                onChange={handleChange}
-                required
-              >
-                <MenuItem value="financeiro">Financeiro</MenuItem>
-                <MenuItem value="operacoes">Operações / Produção</MenuItem>
-                <MenuItem value="rh">Recursos Humanos</MenuItem>
-                <MenuItem value="marketing">Marketing e Vendas</MenuItem>
-                <MenuItem value="ti">Tecnologia da Informação (TI)</MenuItem>
-                <MenuItem value="juridico">Jurídico / Compliance</MenuItem>
-                <MenuItem value="p&d">Pesquisa e Desenvolvimento (P&D)</MenuItem>
-                <MenuItem value="sustentabilidade">Sustentabilidade / ESG</MenuItem>
-                <MenuItem value="compras">Compras / Suprimentos</MenuItem>
-                <MenuItem value="atendimento">Atendimento ao Cliente / Suporte</MenuItem>
-                <MenuItem value="qualidade">Qualidade</MenuItem>
-                <MenuItem value="riscos">Riscos / Segurança</MenuItem>
-                <MenuItem value="parcerias">Parcerias / Negócios</MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl fullWidth>
-                <InputLabel id="tipo-label">Tipo de decisão</InputLabel>
-                <Select
-                  labelId="tipo-label"
-                  label="Tipo de decisão"
-                  name="tipo"
-                  onChange={handleChange}
-                  value={form.tipo}
-                  required
-                >
+            <TextField name="area" value={form.area} onChange={handleChange} required labelId="area-label" label="Área" select fullWidth>
+              <MenuItem value="financeiro">Financeiro</MenuItem>
+              <MenuItem value="operacoes">Operações / Produção</MenuItem>
+              <MenuItem value="rh">Recursos Humanos</MenuItem>
+              <MenuItem value="marketing">Marketing e Vendas</MenuItem>
+              <MenuItem value="ti">Tecnologia da Informação (TI)</MenuItem>
+              <MenuItem value="juridico">Jurídico / Compliance</MenuItem>
+              <MenuItem value="p&d">Pesquisa e Desenvolvimento (P&D)</MenuItem>
+              <MenuItem value="sustentabilidade">Sustentabilidade / ESG</MenuItem>
+              <MenuItem value="compras">Compras / Suprimentos</MenuItem>
+              <MenuItem value="atendimento">Atendimento ao Cliente / Suporte</MenuItem>
+              <MenuItem value="qualidade">Qualidade</MenuItem>
+              <MenuItem value="riscos">Riscos / Segurança</MenuItem>
+              <MenuItem value="parcerias">Parcerias / Negócios</MenuItem>
+            </TextField>
+            <TextField select fullWidth labelId="tipo-label" label="Tipo de decisão" name="tipo" onChange={handleChange} value={form.tipo} required>
                   <MenuItem value="financeira">Financeira</MenuItem>
                   <MenuItem value="operacional">Operacional</MenuItem>
                   <MenuItem value="pessoal">Pessoal</MenuItem>
@@ -141,8 +124,7 @@ export default function DecisionForm({ onCreated }) {
                   <MenuItem value="parcerias">Parcerias / Negócios</MenuItem>
                   <MenuItem value="inovacao">Inovação / P&D</MenuItem>
                   <MenuItem value="sustentabilidade">Sustentabilidade / ESG</MenuItem>
-                </Select>
-            </FormControl>
+            </TextField>
           </div>
 
           {/* Impactos previstos */}

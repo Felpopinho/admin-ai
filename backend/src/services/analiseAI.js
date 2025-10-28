@@ -128,18 +128,6 @@ ${historico.length > 0 ? JSON.stringify(historico) : "Sem histórico disponível
         justificativa: resultadoML.justificativa,
         pontuacaoPrevistaML: resultadoML.pontuacao
       };
-
-  // 4️⃣ Salva histórico completo
-  try {
-    await db.collection("historico_analises").add({
-      id_decisao: id,
-      ...decisao,
-      resultado_analise: resultadoFinal,
-      criado_em: new Date().toISOString()
-    });
-  } catch (e) {
-    console.error("Erro ao salvar histórico ML:", e);
-  }
   console.log(resultadoFinal)
   return resultadoFinal;
 }
