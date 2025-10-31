@@ -27,6 +27,7 @@ import api from "../services/api";
 import { auth } from "../services/firebase";
 import { useSnackbar } from "../contexts/SnackbarContext";
 import { AuthContext } from "../contexts/AuthContext";
+import DOMPurify from "dompurify";
 
 export default function DecisionDialog({ open, onClose, data, onAtualizar }) {
     const { usuario, perfil } = useContext(AuthContext);
@@ -172,18 +173,31 @@ export default function DecisionDialog({ open, onClose, data, onAtualizar }) {
         }
     };
 
+    const formatarMarkdownBasico = (texto) => {
+        if (!texto) return "";
+        const html = texto
+            .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>") // **texto** → <strong>texto</strong>
+            .replace(/\n/g, "<br />"); // quebra de linha opcional
+        return DOMPurify.sanitize(html);
+    };
+
     return (
         <>
             <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
                 <DialogTitle>
-                    <Box display="flex" alignItems="center" justifyContent="space-between">
-                        <Typography variant="h6">{data.titulo}</Typography>
+                    <div className="flex items-center justify-between flex-wrap max-[430px]:justify-center">
+                        <div className="flex items-end gap-x-4 flex-wrap max-[430px]:justify-center">
+                            <p className="text-2xl font-bold text-nowrap">{data.titulo}</p>
+                            <Typography sx={{ textWrap: "nowrap" }} variant="subtitle2" color="textSecondary">
+                                Criada por: {data.historico?.[0]?.por_nome || "Desconhecido"}
+                            </Typography>
+                        </div>
                         <Chip
                             label={data.status?.toUpperCase()}
                             color={getStatusColor(data.status)}
                             variant="filled"
                         />
-                    </Box>
+                    </div>
                 </DialogTitle>
 
                 <DialogContent dividers className="bg-gray-50">
@@ -191,9 +205,6 @@ export default function DecisionDialog({ open, onClose, data, onAtualizar }) {
                         <div>
                             <div className="grid grid-cols-8 gap-2 max-[820px]:grid-cols-2 max-[500px]:grid-cols-1">
                                 <div className="flex flex-col gap-1 col-span-2 max-[820px]:col-span-1">
-                                    <Typography variant="subtitle2" color="textSecondary">
-                                        Criado por: {data.historico?.[0]?.por_nome || "Desconhecido"}
-                                    </Typography>
                                     <Typography variant="body1">
                                         <strong>Área:</strong> {data.area}
                                     </Typography>
@@ -219,31 +230,29 @@ export default function DecisionDialog({ open, onClose, data, onAtualizar }) {
                                     </Typography>
                                 </div>
                                 <div className=" col-span-4 flex justify-between max-[820px]:col-span-2 max-[820px]:row-start-2 max-[500px]:col-span-1 max-[500px]:row-start-2">
-                                    <Divider orientation="vertical" sx={{marginRight:"10px"}}/>
+                                    <Divider orientation="vertical" sx={{ marginRight: "10px" }} />
                                     <div className="w-1/1 flex-1">
-                                        <Typography variant="h6" gutterBottom>
-                                            🧾 Descrição
-                                        </Typography>
+                                        <div className="flex items-center text-xl gap-x-1">
+                                            <Icon>description</Icon>
+                                            <p>Descrição</p>
+                                        </div>
                                         <Typography variant="body2" className="text-gray-700 mb-2">
                                             {data.descricao}
                                         </Typography>
                                     </div>
-                                    <Divider orientation="vertical" sx={{marginLeft:"10px"}}/>
+                                    <Divider orientation="vertical" sx={{ marginLeft: "10px" }} />
                                 </div>
                                 <div className="col-span-2 max-[820px]:col-span-1 max-[820px]:justify-items-end max-[500px]:justify-items-center">
-                                    <Typography variant="h6" gutterBottom>
-                                        🕓 Histórico
-                                    </Typography>
+                                    <div className="flex items-center text-xl gap-x-1">
+                                        <Icon>history</Icon>
+                                        <p>Histórico</p>
+                                    </div>
                                     <List dense>
                                         {data.historico?.map((h, i) => (<div className="max-[820px]:grid justify-items-end max-[500px]:justify-items-center">
-                                            <Chip
-                                                label={h.acao}
-                                                color={getStatusColor(h.acao)}
-                                                size="small"
-                                            />
+
                                             <ListItem key={i}>
                                                 <ListItemText
-                                                    primary={`por ${h.por_nome}`}
+                                                    primary={`${h.acao.toUpperCase()} por ${h.por_nome}`}
                                                     secondary={new Date(h.em).toLocaleString()}
                                                 />
                                             </ListItem>
@@ -253,9 +262,9 @@ export default function DecisionDialog({ open, onClose, data, onAtualizar }) {
                             </div>
                             <div>
                                 <Box className="p-3 bg-white rounded-xl shadow-sm h-full">
-                                    
 
-                                    <Divider sx={{margin: "1vh 0"}} />
+
+                                    <Divider sx={{ margin: "1vh 0" }} />
 
                                     {data.resultado_analise ? (
                                         <div className="flex flex-col gap-2">
@@ -283,24 +292,23 @@ export default function DecisionDialog({ open, onClose, data, onAtualizar }) {
                                                 />
                                             </div>
                                             <div>
-                                                <Typography variant="body3" className="mt-2">
-                                                    <strong>Justificativa:</strong>
-                                                </Typography>
+                                                <div className="text-xl flex items-center gap-x-2">
+                                                    <Icon>equalizer</Icon>
+                                                    <strong>Justificativa</strong>
+                                                </div>
                                                 <Typography variant="body2" className="text-gray-700 mt-1">
                                                     {data.resultado_analise.justificativa}
                                                 </Typography>
                                             </div>
                                             <div>
-                                                <Typography variant="body3" className="mt-3">
+                                                <div className="text-xl flex items-center gap-x-2">
+                                                    <Icon>warning_amber</Icon>
                                                     <strong>Riscos:</strong>
-                                                </Typography>
+                                                </div>
                                                 <List dense>
                                                     {data.resultado_analise.riscos?.map((r, i) => (
                                                         <ListItem key={i}>
-                                                            <ListItemIcon>
-                                                                <Icon>warning_amber</Icon>
-                                                            </ListItemIcon>
-                                                            <ListItemText primary={r} />
+                                                            <ListItemText primary={<span dangerouslySetInnerHTML={{ __html: formatarMarkdownBasico(r) }} />} />
                                                         </ListItem>
                                                     ))}
                                                 </List>
@@ -365,72 +373,78 @@ export default function DecisionDialog({ open, onClose, data, onAtualizar }) {
                     )}
                 </DialogContent>
 
-                <DialogActions sx={{ justifyContent: "space-between", p: 2 }}>
-                    {!editando ? (
-                        <>
-                            <div className="flex gap-2">
-                                <Tooltip title="Editar">
-                                    <IconButton onClick={() => setEditando(true)} color="primary">
-                                        <Icon>edit</Icon>
-                                    </IconButton>
-                                </Tooltip>
-                                {["gestor", "admin"].includes(perfil?.nivel) && (
-                                    <Tooltip title="Excluir">
-                                        <IconButton color="error" onClick={handleExcluir}>
-                                            <Icon>delete</Icon>
+                <DialogActions>
+                    <div className="w-[100%]">
+                        {!editando ? (
+                            <div className="w-1/1 grid grid-cols-3 gap-2 items-center max-[500px]:grid-cols-2 max-[500px]:justify-content-center">
+                                <div className="flex gap-2 w-auto">
+                                    <Tooltip title="Editar">
+                                        <IconButton onClick={() => setEditando(true)} color="primary">
+                                            <Icon>edit</Icon>
                                         </IconButton>
                                     </Tooltip>
-                                )}
-                            </div>
-
-                            <div className="flex gap-2">
-                                {data.status === "aguardando análise" && (
-                                    <Button
-                                        onClick={handleAnalisar}
-                                        disabled={loading}
-                                        variant="contained"
-                                        color="primary"
-                                    >
-                                        {loading ? (
-                                            <>
-                                                <CircularProgress size={18} className="mr-2" /> Analisando...
-                                            </>
-                                        ) : (
-                                            "Analisar"
-                                        )}
-                                    </Button>
-                                )}
-
-                                {["gestor", "admin"].includes(perfil?.nivel) &&
-                                    data.status === "aguardando aprovação" && (
-                                        <>
-                                            <Button
-                                                onClick={() => handleAprovacao("Reprovar")}
-                                                color="error"
-                                                variant="contained"
-                                            >
-                                                Reprovar
-                                            </Button>
-                                            <Button
-                                                onClick={() => handleAprovacao("Aprovar")}
-                                                color="success"
-                                                variant="contained"
-                                            >
-                                                Aprovar
-                                            </Button>
-                                        </>
+                                    {["gestor", "admin"].includes(perfil?.nivel) && (
+                                        <Tooltip title="Excluir">
+                                            <IconButton color="error" onClick={handleExcluir}>
+                                                <Icon>delete</Icon>
+                                            </IconButton>
+                                        </Tooltip>
                                     )}
-                                <Button onClick={onClose}>Fechar</Button>
+                                </div>
+
+                                <div className="flex justify-center gap-2 max-[500px]:col-span-2 max-[500px]:row-start-1">
+                                    <div className="flex gap-2">
+                                        {data.status === "aguardando análise" && (
+                                            <Button
+                                                onClick={handleAnalisar}
+                                                disabled={loading}
+                                                variant="contained"
+                                                color="primary"
+                                            >
+                                                {loading ? (
+                                                    <>
+                                                        <CircularProgress size={18} className="mr-2" /> Analisando...
+                                                    </>
+                                                ) : (
+                                                    "Analisar"
+                                                )}
+                                            </Button>
+                                        )}
+
+                                        {["gestor", "admin"].includes(perfil?.nivel) &&
+                                            data.status === "aguardando aprovação" && (
+                                                <>
+                                                    <Button
+                                                        onClick={() => handleAprovacao("Reprovar")}
+                                                        color="error"
+                                                        variant="contained"
+                                                    >
+                                                        Reprovar
+                                                    </Button>
+                                                    <Button
+                                                        onClick={() => handleAprovacao("Aprovar")}
+                                                        color="success"
+                                                        variant="contained"
+                                                    >
+                                                        Aprovar
+                                                    </Button>
+                                                </>
+                                            )}
+                                    </div>
+                                </div>
+                                <div className="flex justify-end">
+                                    <Button variant="outlined" onClick={onClose}>Fechar</Button>
+                                </div>
                             </div>
-                        </>
-                    ) : (
-                        <>
-                            <Button onClick={handleSalvarEdicao} color="success">
-                                Salvar
-                            </Button>
-                            <Button onClick={() => setEditando(false)}>Cancelar</Button>
-                        </>
-                    )}
+                        ) : (
+                            <>
+                                <Button onClick={handleSalvarEdicao} color="success">
+                                    Salvar
+                                </Button>
+                                <Button onClick={() => setEditando(false)}>Cancelar</Button>
+                            </>
+                        )}
+                    </div>
                 </DialogActions>
             </Dialog>
 
